@@ -49,18 +49,14 @@ class DahuaIntercom {
         // extract name from config
         this.name = config.name;
 
-        // create a new Lock Mechanism service
-        this.service = new this.Service.LockMechanism(this.name);
+        // create a new Switch service
+        this.service = new this.Service.Switch(this.name);
 
         // create handlers for required characteristics
         this.service
-            .getCharacteristic(this.Characteristic.LockCurrentState)
-            .onGet(this.handleLockCurrentStateGet.bind(this));
-
-        this.service
-            .getCharacteristic(this.Characteristic.LockTargetState)
-            .onGet(this.handleLockTargetStateGet.bind(this))
-            .onSet(this.handleLockTargetStateSet.bind(this));
+            .getCharacteristic(this.Characteristic.On)
+            .onGet(this.handleGet.bind(this))
+            .onSet(this.handleSet.bind(this));
     }
 
     /**
@@ -72,29 +68,19 @@ class DahuaIntercom {
     }
 
     /**
-     * Handle requests to get the current value of the "Lock Current State" characteristic
+     * Handle requests to get the current value of the Switch
      */
-    handleLockCurrentStateGet() {
-        this.log.debug('Triggered GET LockCurrentState');
+    handleGet() {
+        this.log.debug('Triggered GET On');
 
-        // the door is always considered secured
-        return this.Characteristic.LockCurrentState.SECURED;
+        // the door is always considered being closed
+        return false;
     }
 
     /**
-     * Handle requests to get the current value of the "Lock Target State" characteristic
+     * Handle requests to set the "Switch On" characteristic
      */
-    handleLockTargetStateGet() {
-        this.log.debug('Triggered GET LockTargetState');
-
-        // the door is always considered being secured
-        return this.Characteristic.LockTargetState.SECURED;
-    }
-
-    /**
-     * Handle requests to set the "Lock Target State" characteristic
-     */
-    async handleLockTargetStateSet() {
+    async handleSet() {
         // establish the new dahua ip connection
         this.log.debug(
             `Connecting to ${this.config.name} at ${this.config.ip}:${PORT}`
@@ -156,13 +142,6 @@ class DahuaIntercom {
                 if (!response.result) {
                     throw this.api.hap.HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE;
                 }
-
-                this.service
-                    .getCharacteristic(this.Characteristic.LockTargetState)
-                    .updateValue(this.Characteristic.LockTargetState.SECURED);
-                this.service
-                    .getCharacteristic(this.Characteristic.LockCurrentState)
-                    .updateValue(this.Characteristic.LockCurrentState.SECURED);
             } finally {
                 // destroy access control factory
                 await this.send({

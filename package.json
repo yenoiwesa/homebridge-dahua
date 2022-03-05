@@ -1,0 +1,46 @@
+{
+    "name": "homebridge-dahua",
+    "version": "1.0.0",
+    "description": "A Homebridge plugin providing support for Dahua intercoms.",
+    "main": "index.js",
+    "files": [
+        "/index.js",
+        "/src"
+    ],
+    "scripts": {
+        "start": "homebridge -D -U ./homebridge-home -P .",
+        "debug": "ndb npm start",
+        "lint": "npx prettier '**/*.{js,json,md,yml}' --check && eslint ."
+    },
+    "keywords": [
+        "homebridge-plugin",
+        "homebridge",
+        "dahua",
+        "vto",
+        "intercom"
+    ],
+    "author": "Matthieu Di Berardino",
+    "license": "Apache-2.0",
+    "devDependencies": {
+        "eslint": "^8.10.0",
+        "homebridge": "^1.4.0",
+        "prettier": "^2.5.1"
+    },
+    "engines": {
+        "node": ">=14.0.0",
+        "homebridge": ">=1.0.0"
+    },
+    "dependencies": {
+        "lodash": "^4.17.21",
+        "python-struct": "^1.1.3",
+        "long": "^4.0.0"
+    },
+    "homepage": "https://github.com/yenoiwesa/homebridge-dahua#readme",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/yenoiwesa/homebridge-dahua.git"
+    },
+    "bugs": {
+        "url": "http://github.com/yenoiwesa/homebridge-dahua/issues"
+    }
+}

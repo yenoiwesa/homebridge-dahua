@@ -17,6 +17,7 @@ const DAHUA_LOGIN_PARAMS = {
     ipAddr: '127.0.0.1',
     loginType: 'Direct',
 };
+const GARAGE_DOOR_TYPE = 'garage-door';
 
 module.exports = (api) => {
     api.registerAccessory('DahuaIntercom', DahuaIntercom);
@@ -49,14 +50,46 @@ class DahuaIntercom {
         // extract name from config
         this.name = config.name;
 
-        // create a new Switch service
-        this.service = new this.Service.Switch(this.name);
+        // create the accessory of the type configured
+        if (config.type === GARAGE_DOOR_TYPE) {
+            // create a new GarageDoorOpener service
+            this.service = new this.Service.GarageDoorOpener(this.name);
 
-        // create handlers for required characteristics
-        this.service
-            .getCharacteristic(this.Characteristic.On)
-            .onGet(this.handleGet.bind(this))
-            .onSet(this.handleSet.bind(this));
+            // create handlers for required characteristics
+            this.service
+                .getCharacteristic(this.Characteristic.TargetDoorState)
+                .onGet(async () => this.Characteristic.TargetDoorState.CLOSED)
+                .onSet(async () => {
+                    await this.handleSet();
+
+                    this.service.setCharacteristic(
+                        this.Characteristic.CurrentDoorState,
+                        this.Characteristic.CurrentDoorState.OPENING
+                    );
+
+                    setTimeout(() => {
+                        this.service.setCharacteristic(
+                            this.Characteristic.CurrentDoorState,
+                            this.Characteristic.CurrentDoorState.OPEN
+                        );
+                    }, 10 * 1000);
+                });
+
+            this.service
+                .getCharacteristic(this.Characteristic.CurrentDoorState)
+                // the door is always considered being closed
+                .onGet(async () => this.Characteristic.CurrentDoorState.CLOSED);
+        } else {
+            // create a new Switch service
+            this.service = new this.Service.Switch(this.name);
+
+            // create handlers for required characteristics
+            this.service
+                .getCharacteristic(this.Characteristic.On)
+                // the switch is always considered off
+                .onGet(async () => false)
+                .onSet(this.handleSet.bind(this));
+        }
     }
 
     /**
@@ -68,17 +101,7 @@ class DahuaIntercom {
     }
 
     /**
-     * Handle requests to get the current value of the Switch
-     */
-    handleGet() {
-        this.log.debug('Triggered GET On');
-
-        // the door is always considered being closed
-        return false;
-    }
-
-    /**
-     * Handle requests to set the "Switch On" characteristic
+     * Handle requests to set the accessory characteristic
      */
     async handleSet() {
         // establish the new dahua ip connection
